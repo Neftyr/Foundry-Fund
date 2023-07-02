@@ -23,9 +23,9 @@ contract FundMeTest is Test {
     HelperConfig public helperConfig;
     address deploy;
     /// @dev `makeAddr()` this function allows us to create new address based on given name (this address will have 0 balance)
-    address public immutable user = makeAddr("Niferu");
-    /// @dev we can also make user like below
-    address public constant another_user = address(1);
+    address public immutable i_user = makeAddr("Niferu");
+    /// @dev we can also make i_user like below
+    address public constant ANOTHER_USER = address(1);
 
     uint256 public constant SEND_VALUE = 0.25 ether;
     uint256 public constant STARTING_USER_BALANCE = 10 ether;
@@ -41,9 +41,9 @@ contract FundMeTest is Test {
         deploy = address(deployer);
         console.log("Deploy Contract Address: ", deploy);
         (fundMe, helperConfig) = deployer.run();
-        /// @dev adding funds to our user by using foundry function `deal()`
-        // vm.deal(user, 10 ether) will work also
-        deal(user, 10 ether);
+        /// @dev adding funds to our i_user by using foundry function `deal()`
+        // vm.deal(i_user, 10 ether) will work also
+        deal(i_user, 10 ether);
     }
 
     function testMinimumDollarIsFive() public {
@@ -67,22 +67,22 @@ contract FundMeTest is Test {
 
     function testFundUpdatesData() public {
         /// @dev `prank` keyword sets msg.sender to the specific address for the next call
-        vm.prank(user);
-        console.log(user);
+        vm.prank(i_user);
+        console.log(i_user);
 
         fundMe.fund{value: 1 ether}();
 
-        uint256 amountFunded = fundMe.getAddressToAmountFunded(user);
+        uint256 amountFunded = fundMe.getAddressToAmountFunded(i_user);
         address funder = fundMe.getFunder(0);
 
         /// @dev We can use both assertions
         assertEq(amountFunded, 1 ether);
-        assert(funder == user);
+        assert(funder == i_user);
     }
 
     function testOnlyOwnerCanWithdraw() public funded {
         // Calling withdraw as not owner
-        vm.prank(user);
+        vm.prank(i_user);
         vm.expectRevert();
         fundMe.withdraw();
 
@@ -103,24 +103,25 @@ contract FundMeTest is Test {
 
         assertEq(startingFundMeBalance, SEND_VALUE);
 
-        // vm.txGasPrice(GAS_PRICE);
-        // uint256 gasStart = gasleft();
-        // // Act
+        /// @dev Adding transaction gas cost for next tx (our foundry is setting gasCost to 0 as default)
+        vm.txGasPrice(GAS_PRICE);
+        uint256 gasStart = gasleft();
+
+        // Act
         vm.startPrank(fundMe.getOwner());
         fundMe.withdraw();
         vm.stopPrank();
 
-        // uint256 gasEnd = gasleft();
-        // uint256 gasUsed = (gasStart - gasEnd) * tx.gasprice;
+        uint256 gasEnd = gasleft();
+        uint256 gasUsed = (gasStart - gasEnd) * tx.gasprice;
+        console.log("Gas: ", gasUsed);
+        /// @dev This above gas thing has no effect on our balances
 
         // Assert
         uint256 endingFundMeBalance = address(fundMe).balance;
         uint256 endingOwnerBalance = fundMe.getOwner().balance;
         assertEq(endingFundMeBalance, 0);
-        assertEq(
-            startingFundMeBalance + startingOwnerBalance,
-            endingOwnerBalance // + gasUsed
-        );
+        assertEq(startingFundMeBalance + startingOwnerBalance, endingOwnerBalance);
     }
 
     // Can we do our withdraw function a cheaper way?
@@ -147,8 +148,31 @@ contract FundMeTest is Test {
         assert((numberOfFunders + 1) * SEND_VALUE == fundMe.getOwner().balance - startingOwnerBalance);
     }
 
+    function testWithDrawFromMultipleFundersCheaper() public funded {
+        /// @dev We are using uint160 here as it is having same amount of bytes as address, so we can cast uint160(address)
+        uint160 numberOfFunders = 10;
+        uint160 startingFunderIndex = 2;
+
+        for (uint160 i = startingFunderIndex; i < numberOfFunders + startingFunderIndex; i++) {
+            /// @dev `hoax()` function is prank() + deal()
+            hoax(address(i), STARTING_USER_BALANCE);
+            fundMe.fund{value: SEND_VALUE}();
+        }
+
+        uint256 startingFundMeBalance = address(fundMe).balance;
+        uint256 startingOwnerBalance = fundMe.getOwner().balance;
+
+        vm.startPrank(fundMe.getOwner());
+        fundMe.cheaperWithdraw();
+        vm.stopPrank();
+
+        assert(address(fundMe).balance == 0);
+        assert(startingFundMeBalance + startingOwnerBalance == fundMe.getOwner().balance);
+        assert((numberOfFunders + 1) * SEND_VALUE == fundMe.getOwner().balance - startingOwnerBalance);
+    }
+
     modifier funded() {
-        vm.prank(user);
+        vm.prank(i_user);
         fundMe.fund{value: SEND_VALUE}();
         assert(address(fundMe).balance > 0);
         _;
