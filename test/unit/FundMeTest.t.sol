@@ -27,7 +27,7 @@ contract FundMeTest is Test {
     /// @dev we can also make i_user like below
     address public constant ANOTHER_USER = address(1);
 
-    uint256 public constant SEND_VALUE = 0.25 ether;
+    uint256 public constant SEND_VALUE = 0.1 ether;
     uint256 public constant STARTING_USER_BALANCE = 10 ether;
     uint256 public constant GAS_PRICE = 1;
 
