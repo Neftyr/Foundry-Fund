@@ -11,11 +11,9 @@ out/
 # Docs
 docs/
 
-# Lib
-lib/
-
 # Dotenv file
 .env
 
 .keystore
 .gas-snapshot
+lcov.info

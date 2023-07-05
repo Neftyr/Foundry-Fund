@@ -15,6 +15,8 @@ build:; forge build
 
 test:; forge test
 
+coverage:; forge coverage
+
 snapshot:; forge snapshot
 
 format:; forge fmt

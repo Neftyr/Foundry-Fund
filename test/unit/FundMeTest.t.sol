@@ -21,6 +21,8 @@ contract FundMeTest is Test {
 
     FundMe public fundMe;
     HelperConfig public helperConfig;
+    address public priceFeed;
+
     address deploy;
     /// @dev `makeAddr()` this function allows us to create new address based on given name (this address will have 0 balance)
     address public immutable i_user = makeAddr("Niferu");
@@ -41,6 +43,8 @@ contract FundMeTest is Test {
         deploy = address(deployer);
         console.log("Deploy Contract Address: ", deploy);
         (fundMe, helperConfig) = deployer.run();
+        priceFeed = helperConfig.activeNetworkConfig();
+
         /// @dev adding funds to our i_user by using foundry function `deal()`
         // vm.deal(i_user, 10 ether) will work also
         deal(i_user, 10 ether);
@@ -54,9 +58,12 @@ contract FundMeTest is Test {
         assertEq(fundMe.getOwner(), msg.sender);
     }
 
-    function testPriceFeedVersion() public {
+    function testPriceFeed() public {
         uint256 version = fundMe.getVersion();
+        address feed = address(fundMe.getPriceFeed());
+
         assertEq(version, 4);
+        assertEq(feed, priceFeed);
     }
 
     function testFundFailsWithoutEnoughETH() public {

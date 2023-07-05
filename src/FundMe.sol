@@ -67,7 +67,7 @@ contract FundMe {
         // Transfer vs call vs Send
         // payable(msg.sender).transfer(address(this).balance);
         (bool success, ) = i_owner.call{value: address(this).balance}("");
-        require(success);
+        require(success, "Transfer Failed!");
     }
 
     function cheaperWithdraw() public onlyOwner {
