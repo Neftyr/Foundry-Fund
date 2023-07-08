@@ -131,6 +131,14 @@ contract FundMeTest is Test {
         assertEq(startingFundMeBalance + startingOwnerBalance, endingOwnerBalance);
     }
 
+    function testSuccessFail() public funded {
+        vm.startPrank(fundMe.getOwner());
+        vm.mockCallRevert(address(fundMe), abi.encodeWithSignature("withdraw()"), "Transfer Failed!");
+        vm.expectRevert("Transfer Failed!");
+        fundMe.withdraw();
+        vm.stopPrank();
+    }
+
     // Can we do our withdraw function a cheaper way?
     function testWithDrawFromMultipleFunders() public funded {
         /// @dev We are using uint160 here as it is having same amount of bytes as address, so we can cast uint160(address)
