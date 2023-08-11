@@ -10,17 +10,16 @@ contract DeployFunWithStorage is Script {
         vm.startBroadcast();
         FunWithStorage funWithStorage = new FunWithStorage();
         vm.stopBroadcast();
-        printStorageData(address(funWithStorage));
+        // Challenge Contract Address, Storage Slot To Check
+        printStorageData(address(0xD7D127991c6A89Df752FC3daeC17540aE8B86101), uint256(777));
         printFirstArrayElement(address(funWithStorage));
         return (funWithStorage);
     }
 
-    function printStorageData(address contractAddress) public view {
-        for (uint256 i = 0; i < 10; i++) {
-            bytes32 value = vm.load(contractAddress, bytes32(i));
-            console.log("Vale at location", i, ":");
-            console.logBytes32(value);
-        }
+    function printStorageData(address contractAddress, uint256 storageSlot) public view {
+        bytes32 value = vm.load(contractAddress, bytes32(storageSlot));
+        console.log("Value at location", storageSlot, ":");
+        console.logBytes32(value);
     }
 
     function printFirstArrayElement(address contractAddress) public view {

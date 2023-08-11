@@ -40,6 +40,9 @@ endif
 deploy:
 	@forge script script/DeployFundMe.s.sol:DeployFundMe $(NETWORK_ARGS)
 
+storage:
+	@forge script script/DeployStorageFun.s.sol:DeployFunWithStorage $(NETWORK_ARGS)
+
 fund:
 	@forge script script/Interactions.s.sol:FundFundMe $(NETWORK_ARGS)
 
