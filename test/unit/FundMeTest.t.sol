@@ -6,6 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {FundMe} from "../../src/FundMe.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {DeployFundMe} from "../../script/DeployFundMe.s.sol";
+import {MockFailedCall} from "../mock/MockFailedCall.sol";
 
 contract FundMeTest is Test {
     /** Tests
@@ -144,6 +145,28 @@ contract FundMeTest is Test {
         vm.mockCallRevert(address(fundMe), abi.encodeWithSignature("withdrawTwo()"), abi.encodeWithSelector(FundMe.FundMe__TransferFailed.selector));
         vm.expectRevert(abi.encodeWithSelector(FundMe.FundMe__TransferFailed.selector));
         fundMe.withdrawTwo();
+        vm.stopPrank();
+    }
+
+    function testRevertsIfTransferFail() public {
+        MockFailedCall mock = new MockFailedCall();
+
+        deal(address(mock), 10 ether);
+
+        vm.startPrank(address(mock));
+        FundMe mockFundMe = new FundMe(priceFeed);
+
+        mockFundMe.fund{value: SEND_VALUE}();
+
+        vm.expectRevert("Transfer Failed!");
+        mockFundMe.withdraw();
+
+        vm.expectRevert(FundMe.FundMe__TransferFailed.selector);
+        mockFundMe.withdrawTwo();
+
+        vm.expectRevert();
+        mockFundMe.cheaperWithdraw();
+
         vm.stopPrank();
     }
 
